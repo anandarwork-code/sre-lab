@@ -34,6 +34,8 @@ Host: sre-lab (AlmaLinux)
 | `monitoring/` | Prometheus configs, Grafana dashboards |
 | `terraform/` | Infrastructure as Code (coming soon) |
 | `experiments/` | Notes from breaking things intentionally |
+| `progress/` | Lab progress log — what's been built and what's next |
+
 
 ## Scripts
 
