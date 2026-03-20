@@ -19,9 +19,9 @@ every script, experiment, failure simulation, and incident report is committed h
 ## Lab Architecture
 ```
 Host: sre-lab (AlmaLinux)
-├── VM1: sre-vm1        — general Linux + automation practice
-├── VM2: monitoring     — Prometheus + Grafana (planned)
-├── VM3: containers     — Docker / Podman (planned)
+├── VM1: sre-vm1        — app node (Nginx + Node.js)
+├── VM2: sre-db         — database node (MySQL)
+├── VM3: sre-mon        — Prometheus + Grafana (planned)
 └── VM4: failure-lab    — intentional system breaking (planned)
 ```
 
@@ -50,8 +50,8 @@ Host: sre-lab (AlmaLinux)
 - Containers, IaC, CI/CD (in progress)
 
 ## Goal
-
-SRE / DevOps role — 15 LPA+
+Becoming a production-grade SRE through deliberate practice —
+building, breaking, and monitoring real systems.
 
 ---
 > "How would you know if this broke at 3am?"
