@@ -1,5 +1,5 @@
 # SRE Lab — Progress Log
-Last Updated: 2026-03-20
+Last Updated: 2026-03-22
 
 ---
 
@@ -12,21 +12,22 @@ Hypervisor   : KVM + QEMU + libvirt
 
 ## Virtual Machines
 
-| VM        | Hostname | IP                | OS                  | Status  | Purpose         |
-|-----------|----------|-------------------|---------------------|---------|-----------------|
-| almalinux9-vm1 | sre-vm1 | 192.168.122.152 | AlmaLinux 9.7 Min | Running | General practice / App node |
-| db-node   | sre-db   | 192.168.122.127   | AlmaLinux 9.7 Min   | Running | Database (MySQL) |
+| VM             | Hostname | IP              | OS                | Status  | Purpose                  |
+|----------------|----------|-----------------|-------------------|---------|--------------------------|
+| almalinux9-vm1 | sre-vm1  | 192.168.122.152 | AlmaLinux 9.7 Min | Running | App node (Nginx + Node.js) |
+| db-node        | sre-db   | 192.168.122.127 | AlmaLinux 9.7 Min | Running | Database (MySQL)          |
+| sre-mon        | sre-mon  | TBD             | AlmaLinux 9.7 Min | Planned | Monitoring (Prometheus + Grafana) |
 
 ---
 
 ## Users on sre-vm1
 
-| User     | Access              | Notes                              |
-|----------|---------------------|------------------------------------|
-| anand    | Full sudo (wheel)   | Primary user                       |
-| sradmin  | Full sudo (wheel)   | Senior admin role                  |
-| jradmin  | Limited sudo        | systemctl restart/status only      |
-| dev_user | No sudo             | Developer role — restricted access |
+| User     | Access            | Notes                              |
+|----------|-------------------|------------------------------------|
+| anand    | Full sudo (wheel) | Primary user                       |
+| sradmin  | Full sudo (wheel) | Senior admin role                  |
+| jradmin  | Limited sudo      | systemctl restart/status only      |
+| dev_user | No sudo           | Developer role — restricted access |
 
 ---
 
@@ -51,37 +52,54 @@ Hypervisor   : KVM + QEMU + libvirt
 - Created jradmin — limited sudo via /etc/sudoers (systemctl only)
 - Created dev_user — no sudo access
 
+### MySQL Database Setup (sre-db)
+- Installed MySQL 8.0 on sre-db
+- Ran mysql_secure_installation — root secured, anonymous users removed
+- Created database: srelab
+- Created user: sreapp@192.168.122.152 — locked to sre-vm1 only
+- Granted full privileges on srelab.* to sreapp
+- Opened firewall port 3306 for sre-vm1 access only
+
+### Node.js App Stack (sre-vm1)
+- Installed Node.js v20.20.1 and npm 10.8.2 via NodeSource repo
+- Installed Nginx — enabled, running on port 80
+- Built sreapp — Express HTTP server with / and /health endpoints
+- /health endpoint verifies live MySQL connection on sre-db
+- Created sreapp.service systemd unit — starts on boot, restarts on crash
+- Configured Nginx as reverse proxy → forwards port 80 to Node.js port 3000
+- Fixed SELinux blocking Nginx → Node.js: setsebool -P httpd_can_network_connect 1
+- Full flow verified: curl port 80 → Nginx → Node.js:3000 → MySQL on sre-db
+
 ### Bash Scripting
-- Written: check_services.sh
-  - Loops through services (sshd, httpd, crond)
-  - Checks systemctl status for each
-  - Logs output with timestamps using tee -a
-  - Outputs running service count (X/3 services running)
+- check_services.sh — loops through services, logs with timestamp, outputs X/3 count
+- check_mysql.sh — checks mysqld via systemctl is-active, logs with tee -a
+- check_sreapp.sh — full stack health check: MySQL via HTTP, nginx, sreapp via systemctl
 
 ### GitHub Portfolio
-- Repo: github.com/anand/sre-lab
-- Structure: scripts/, incident-notes/, monitoring/, terraform/, experiments/
+- Repo: github.com/anandarwork-code/sre-lab
+- Structure: scripts/, incident-notes/, monitoring/, terraform/, experiments/, progress/
 - SSH key (ed25519) configured for passwordless push
-- Committed: check_services.sh, README.md
+- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, sreapp/, README.md, progress.txt
 
 ---
 
-## Planned 3-Tier Lab Stack
+## Live 3-Tier Stack
 
-| Layer     | VM       | Stack              |
-|-----------|----------|--------------------|
-| App/Web   | sre-vm1  | Nginx + Node.js    |
-| Database  | sre-db   | MySQL              |
-| Monitoring| sre-mon  | Prometheus + Grafana |
+| Layer      | VM      | Stack              | Status  |
+|------------|---------|--------------------|---------|
+| App/Web    | sre-vm1 | Nginx + Node.js    | ✅ Live |
+| Database   | sre-db  | MySQL 8.0          | ✅ Live |
+| Monitoring | sre-mon | Prometheus+Grafana | Planned |
 
 ---
 
 ## Next Steps
 
-- Install MySQL on sre-db
-- Run mysql_secure_installation
-- Create database and test user
-- Write check_mysql.sh — verify MySQL is running via Bash script
-- Spin up VM3 monitoring-node
+- Spin up VM3 sre-mon — Prometheus + Grafana
+- Wire Prometheus to scrape sre-vm1 and sre-db metrics
+- Build Grafana dashboard for the full stack
+- Add more API endpoints to sreapp — read/write MySQL data
+- Write automated MySQL backup script with cron
+- Install and configure Gitea on sre-vm1
 
 ---
