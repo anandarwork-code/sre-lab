@@ -1,5 +1,5 @@
 # SRE Lab — Progress Log
-Last Updated: 2026-03-22
+Last Updated: 2026-03-29
 
 ---
 
@@ -12,11 +12,13 @@ Hypervisor   : KVM + QEMU + libvirt
 
 ## Virtual Machines
 
-| VM             | Hostname | IP              | OS                | Status  | Purpose                  |
-|----------------|----------|-----------------|-------------------|---------|--------------------------|
-| almalinux9-vm1 | sre-vm1  | 192.168.122.152 | AlmaLinux 9.7 Min | Running | App node (Nginx + Node.js) |
-| db-node        | sre-db   | 192.168.122.127 | AlmaLinux 9.7 Min | Running | Database (MySQL)          |
-| sre-mon        | sre-mon  | TBD             | AlmaLinux 9.7 Min | Planned | Monitoring (Prometheus + Grafana) |
+| VM             | Hostname | IP              | OS                | Status      | Purpose                           |
+|----------------|----------|-----------------|-------------------|-------------|-----------------------------------|
+| almalinux9-vm1 | sre-vm1  | 192.168.122.152 | AlmaLinux 9.7 Min | Running     | App node (Nginx + Node.js)        |
+| db-node        | sre-db   | 192.168.122.127 | AlmaLinux 9.7 Min | Running     | Database (MySQL)                  |
+| sre-mon        | sre-mon  | 192.168.122.218 | AlmaLinux 9.7 Min | Running     | Monitoring (Prometheus + Grafana) |
+| container-node | —        | TBD             | —                 | Planned     | Docker / Podman                   |
+| failure-lab    | —        | TBD             | —                 | Planned     | Intentional failure simulations   |
 
 ---
 
@@ -43,9 +45,10 @@ Hypervisor   : KVM + QEMU + libvirt
 ### VM Management
 - Created VM1 (sre-vm1) using virt-install — text mode install
 - Created VM2 (sre-db) using virt-install — text mode install
+- Created VM3 (sre-mon) using virt-install — text mode install
 - Mastered virsh lifecycle: start, shutdown, destroy, reboot, autostart
 - Created snapshot (snap1) on sre-vm1
-- Configured SSH passwordless auth (ed25519) from host to both VMs
+- Configured SSH passwordless auth (ed25519) from host to all three VMs
 
 ### User Management (sre-vm1)
 - Created sradmin — full sudo via wheel group
@@ -75,31 +78,69 @@ Hypervisor   : KVM + QEMU + libvirt
 - check_mysql.sh — checks mysqld via systemctl is-active, logs with tee -a
 - check_sreapp.sh — full stack health check: MySQL via HTTP, nginx, sreapp via systemctl
 
+### Monitoring Stack (sre-mon)
+- Created VM3 sre-mon — AlmaLinux 9.7 minimal, IP 192.168.122.218
+- Installed Prometheus v2.51.0
+  - Binaries at /usr/local/bin/prometheus and /usr/local/bin/promtool
+  - Config dir: /etc/prometheus/ — consoles and console_libraries copied
+  - Data dir: /var/lib/prometheus/
+  - System user prometheus created (no home, no shell)
+  - prometheus.yml written and validated with promtool
+  - systemd service written, enabled, and running
+  - Firewall port 9090 opened
+- Installed Node Exporter v1.10.2 on sre-vm1
+  - Binary at /usr/local/bin/node_exporter
+  - System user node_exporter created
+  - systemd service running and enabled
+  - Firewall port 9100 opened
+- Installed Node Exporter v1.10.2 on sre-db
+  - Same setup as sre-vm1 — binary, user, service, firewall
+  - Running and enabled
+- Updated prometheus.yml to scrape all three targets
+  - localhost:9090 (prometheus_monitor) — health: up
+  - 192.168.122.152:9100 (sre-vm1_monitor) — health: up
+  - 192.168.122.127:9100 (db-node_monitor) — health: up
+- Validated config with promtool — SUCCESS
+- All targets confirmed healthy via curl /api/v1/targets
+
 ### GitHub Portfolio
 - Repo: github.com/anandarwork-code/sre-lab
 - Structure: scripts/, incident-notes/, monitoring/, terraform/, experiments/, progress/
 - SSH key (ed25519) configured for passwordless push
-- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, sreapp/, README.md, progress.txt
+- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, sreapp/, README.md, progress.txt, prometheus.yml
 
 ---
 
 ## Live 3-Tier Stack
 
-| Layer      | VM      | Stack              | Status  |
-|------------|---------|--------------------|---------|
-| App/Web    | sre-vm1 | Nginx + Node.js    | ✅ Live |
-| Database   | sre-db  | MySQL 8.0          | ✅ Live |
-| Monitoring | sre-mon | Prometheus+Grafana | Planned |
+| Layer      | VM      | Stack              | Status       |
+|------------|---------|--------------------|--------------|
+| App/Web    | sre-vm1 | Nginx + Node.js    | ✅ Live      |
+| Database   | sre-db  | MySQL 8.0          | ✅ Live      |
+| Monitoring | sre-mon | Prometheus         | ✅ Live      |
+| Monitoring | sre-mon | Grafana            | ⏳ Pending   |
+
+---
+
+## Prometheus Scrape Targets
+
+| Job Name          | Target                    | Status   |
+|-------------------|---------------------------|----------|
+| prometheus_monitor | localhost:9090            | ✅ Up    |
+| sre-vm1_monitor   | 192.168.122.152:9100      | ✅ Up    |
+| db-node_monitor   | 192.168.122.127:9100      | ✅ Up    |
 
 ---
 
 ## Next Steps
 
-- Spin up VM3 sre-mon — Prometheus + Grafana
-- Wire Prometheus to scrape sre-vm1 and sre-db metrics
-- Build Grafana dashboard for the full stack
-- Add more API endpoints to sreapp — read/write MySQL data
-- Write automated MySQL backup script with cron
+- Install Grafana on sre-mon
+- Wire Grafana to Prometheus as data source
+- Build Grafana dashboard for the full stack (CPU, memory, disk per VM)
+- Set up Cloudflare Tunnel on sre-vm1 (expose sreapp and Grafana publicly)
+- Configure DNS subdomains: anandar.dev, grafana.anandar.dev, git.anandar.dev
 - Install and configure Gitea on sre-vm1
+- Write automated MySQL backup script with cron
+- Add alerting — notify when any service goes down
 
 ---
