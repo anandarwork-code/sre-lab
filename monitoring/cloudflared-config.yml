@@ -1,0 +1,9 @@
+tunnel: 32a3b99a-14b9-4c36-a061-ab60f28e97b8
+credentials-file: /home/anand/.cloudflared/32a3b99a-14b9-4c36-a061-ab60f28e97b8.json
+
+ingress:
+  - hostname: anandar.dev
+    service: http://localhost:80
+  - hostname: grafana.anandar.dev
+    service: http://192.168.122.218:3000
+  - service: http_status:404
