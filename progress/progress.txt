@@ -1,5 +1,5 @@
 # SRE Lab — Progress Log
-Last Updated: 2026-03-29
+Last Updated: 2026-03-30
 
 ---
 
@@ -103,11 +103,28 @@ Hypervisor   : KVM + QEMU + libvirt
 - Validated config with promtool — SUCCESS
 - All targets confirmed healthy via curl /api/v1/targets
 
+### Grafana Setup (sre-mon)
+- Installed Grafana v12.4.2 via dnf repo
+- systemd service running and enabled on boot
+- Firewall port 3000 opened
+- Connected Prometheus as data source via API — status OK
+- Imported Node Exporter Full dashboard (ID 1860) via API
+- Changed default admin password
+
+### Cloudflare Tunnel (sre-vm1)
+- Installed cloudflared v2026.3.0 via RPM
+- Authenticated with Cloudflare account — cert.pem saved to /home/anand/.cloudflared/
+- Created tunnel: sre-lab (ID: 32a3b99a-14b9-4c36-a061-ab60f28e97b8)
+- Config written to /etc/cloudflared/config.yml
+- DNS CNAME records created for anandar.dev and grafana.anandar.dev
+- cloudflared installed as systemd service — running and enabled on boot
+- anandar.dev and grafana.anandar.dev live with SSL via Cloudflare
+
 ### GitHub Portfolio
 - Repo: github.com/anandarwork-code/sre-lab
 - Structure: scripts/, incident-notes/, monitoring/, terraform/, experiments/, progress/
 - SSH key (ed25519) configured for passwordless push
-- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, sreapp/, README.md, progress.txt, prometheus.yml
+- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, sreapp/, README.md, progress.txt, prometheus.yml, monitoring/cloudflared-config.yml
 
 ---
 
@@ -118,7 +135,17 @@ Hypervisor   : KVM + QEMU + libvirt
 | App/Web    | sre-vm1 | Nginx + Node.js    | ✅ Live      |
 | Database   | sre-db  | MySQL 8.0          | ✅ Live      |
 | Monitoring | sre-mon | Prometheus         | ✅ Live      |
-| Monitoring | sre-mon | Grafana            | ⏳ Pending   |
+| Monitoring | sre-mon | Grafana v12.4.2    | ✅ Live      |
+
+---
+
+## Public URLs (via Cloudflare Tunnel)
+
+| URL                      | Points To           | Status    |
+|--------------------------|---------------------|-----------|
+| https://anandar.dev      | sre-vm1 Nginx:80    | ✅ Live   |
+| https://grafana.anandar.dev | sre-mon:3000     | ✅ Live   |
+| https://git.anandar.dev  | sre-vm1 (Gitea)     | ⏳ Pending|
 
 ---
 
@@ -134,13 +161,10 @@ Hypervisor   : KVM + QEMU + libvirt
 
 ## Next Steps
 
-- Install Grafana on sre-mon
-- Wire Grafana to Prometheus as data source
-- Build Grafana dashboard for the full stack (CPU, memory, disk per VM)
-- Set up Cloudflare Tunnel on sre-vm1 (expose sreapp and Grafana publicly)
-- Configure DNS subdomains: anandar.dev, grafana.anandar.dev, git.anandar.dev
-- Install and configure Gitea on sre-vm1
+- Install and configure Gitea on sre-vm1 — NEXT
 - Write automated MySQL backup script with cron
 - Add alerting — notify when any service goes down
+- Configure git.anandar.dev subdomain once Gitea is installed
+- Failure lab simulations: disk full, service crash, network loss
 
 ---
