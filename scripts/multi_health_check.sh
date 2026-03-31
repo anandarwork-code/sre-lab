@@ -1,34 +1,29 @@
 #!/bin/bash
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'   # NC = No Color — resets back to normal
-
 sre_vm1=192.168.122.152
 sre_db=192.168.122.127
 sre_mon=192.168.122.218
-SSH_USER=anand
+ssh_user=anand
 
-echo "[sre-vm1] nginx:"
-result_vm1=$(ssh $SSH_USER@$sre_vm1 "systemctl is-active nginx")
-if [ "$result_vm1" == "active" ]; then 
-	echo -e "${GREEN}OK${NC}"
-else 
-        echo -e "${RED}FAIL${NC}"
-fi
+green='\033[0;32m'
+red='\033[0;31m'
+nc='\033[0m'   # NC = No Color — resets back to normal
 
-echo "[sre-db] mysql:"
-result_db=$(ssh $SSH_USER@$sre_db "systemctl is-active mysqld")
-if [ "$result_db" == "active" ]; then
-	echo -e "${GREEN}OK${NC}"
-else 
-	echo -e "${RED}FAIL${NC}"
-fi
+check_service() {
 
-echo "[sre-mon] prometheus:"
-result_mon=$(ssh $SSH_USER@$sre_mon "systemctl is-active prometheus")
-if [ "$result_mon" == "active" ]; then 
-	echo -e "${GREEN}OK${NC}"
-else 
-	echo -e "${RED}FAIL${NC}"
-fi
+local label=$1
+local ip=$2
+local service=$3
+
+echo  "[$label] $service "
+result=$(ssh $ssh_user@$ip "systemctl is-active $service")
+if [ "$result" == "active" ]; then
+        echo -e "${green}OK${nc} "
+else
+        echo -e "${red}FAIL${nc} "
+fi 
+}
+
+check_service "sre-vm1" "$sre_vm1" "nginx"
+check_service "sre-db" "$sre_db" "mysqld"
+check_service "sre-mon" "$sre_mon" "prometheus"
