@@ -25,5 +25,6 @@ fi
 }
 
 check_service "sre-vm1" "$sre_vm1" "nginx"
+check_service "sre-vm1" "$sre_vm1" "sreapp"
 check_service "sre-db" "$sre_db" "mysqld"
 check_service "sre-mon" "$sre_mon" "prometheus"
