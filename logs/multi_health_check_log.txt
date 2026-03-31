@@ -1,0 +1,8 @@
+[sre-vm1] nginx 
+[0;32mOK[0m 
+[sre-vm1] sreapp 
+[0;32mOK[0m 
+[sre-db] mysqld 
+[0;32mOK[0m 
+[sre-mon] prometheus 
+[0;32mOK[0m 
