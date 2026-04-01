@@ -1,5 +1,6 @@
+[anand@sre-lab ~]$ cat ~/sre-lab/progress/progress.txt
 # SRE Lab — Progress Log
-Last Updated: 2026-03-30
+Last Updated: 2026-04-01
 
 ---
 
@@ -12,13 +13,13 @@ Hypervisor   : KVM + QEMU + libvirt
 
 ## Virtual Machines
 
-| VM             | Hostname | IP              | OS                | Status      | Purpose                           |
-|----------------|----------|-----------------|-------------------|-------------|-----------------------------------|
-| almalinux9-vm1 | sre-vm1  | 192.168.122.152 | AlmaLinux 9.7 Min | Running     | App node (Nginx + Node.js)        |
-| db-node        | sre-db   | 192.168.122.127 | AlmaLinux 9.7 Min | Running     | Database (MySQL)                  |
-| sre-mon        | sre-mon  | 192.168.122.218 | AlmaLinux 9.7 Min | Running     | Monitoring (Prometheus + Grafana) |
-| container-node | —        | TBD             | —                 | Planned     | Docker / Podman                   |
-| failure-lab    | —        | TBD             | —                 | Planned     | Intentional failure simulations   |
+| VM             | Hostname | IP              | OS                | Status      | Purpose                                                      |
+|----------------|----------|-----------------|-------------------|-------------|--------------------------------------------------------------|
+| almalinux9-vm1 | sre-vm1  | 192.168.122.152 | AlmaLinux 9.7 Min | Running     | App node (Nginx + Node.js + Gitea + cloudflared)            |
+| db-node        | sre-db   | 192.168.122.127 | AlmaLinux 9.7 Min | Running     | Database (MySQL)                                             |
+| sre-mon        | sre-mon  | 192.168.122.218 | AlmaLinux 9.7 Min | Running     | Monitoring (Prometheus + Grafana)                            |
+| container-node | —        | TBD             | —                 | Planned     | Docker / Podman                                              |
+| failure-lab    | —        | TBD             | —                 | Planned     | Intentional failure simulations                              |
 
 ---
 
@@ -119,6 +120,13 @@ Hypervisor   : KVM + QEMU + libvirt
 - DNS CNAME records created for anandar.dev and grafana.anandar.dev
 - cloudflared installed as systemd service — running and enabled on boot
 - anandar.dev and grafana.anandar.dev live with SSL via Cloudflare
+
+### Gitea Setup (sre-vm1)
+- Installed Gitea service on sre-vm1
+- Configured Gitea to run behind Nginx reverse proxy
+- Service created and enabled via systemd
+- Verified local access on designated port
+- Prepared for public exposure via Cloudflare Tunnel (git.anandar.dev)
 
 ### GitHub Portfolio
 - Repo: github.com/anandarwork-code/sre-lab
