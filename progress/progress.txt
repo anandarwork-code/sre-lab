@@ -1,6 +1,5 @@
-[anand@sre-lab ~]$ cat ~/sre-lab/progress/progress.txt
 # SRE Lab — Progress Log
-Last Updated: 2026-04-01
+Last Updated: 2026-04-02
 
 ---
 
@@ -78,6 +77,10 @@ Hypervisor   : KVM + QEMU + libvirt
 - check_services.sh — loops through services, logs with timestamp, outputs X/3 count
 - check_mysql.sh — checks mysqld via systemctl is-active, logs with tee -a
 - check_sreapp.sh — full stack health check: MySQL via HTTP, nginx, sreapp via systemctl
+- multi_health_check.sh — SSHes into all 3 VMs, checks 5 critical services with color-coded output
+  - Monitors: nginx, sreapp (sre-vm1), mysqld (sre-db), prometheus (sre-mon), gitea (sre-vm1)
+  - Runs every 15 minutes via cron — logs to ~/sre-lab/logs/multi_health_check_log.txt
+  - Uses reusable check_service() function with local variables and positional arguments
 
 ### Monitoring Stack (sre-mon)
 - Created VM3 sre-mon — AlmaLinux 9.7 minimal, IP 192.168.122.218
@@ -117,22 +120,39 @@ Hypervisor   : KVM + QEMU + libvirt
 - Authenticated with Cloudflare account — cert.pem saved to /home/anand/.cloudflared/
 - Created tunnel: sre-lab (ID: 32a3b99a-14b9-4c36-a061-ab60f28e97b8)
 - Config written to /etc/cloudflared/config.yml
-- DNS CNAME records created for anandar.dev and grafana.anandar.dev
+- DNS CNAME records created for anandar.dev, grafana.anandar.dev, git.anandar.dev
 - cloudflared installed as systemd service — running and enabled on boot
-- anandar.dev and grafana.anandar.dev live with SSL via Cloudflare
+- anandar.dev, grafana.anandar.dev, git.anandar.dev live with SSL via Cloudflare
+- Note: Tunnel is HTTP only — Git SSH over Cloudflare Tunnel not possible
 
 ### Gitea Setup (sre-vm1)
-- Installed Gitea service on sre-vm1
-- Configured Gitea to run behind Nginx reverse proxy
-- Service created and enabled via systemd
-- Verified local access on designated port
-- Prepared for public exposure via Cloudflare Tunnel (git.anandar.dev)
+- Installed Gitea v1.25.5 — binary at /usr/local/bin/gitea
+- Created git system user (no shell), data dir /var/lib/gitea/, config /etc/gitea/app.ini
+- Created MySQL database gitea and user gitea@% on sre-db
+- Created gitea.service systemd unit — running and enabled
+- Opened firewall ports 3001 (HTTP) and 2222 (SSH)
+- Nginx reverse proxy configured — /etc/nginx/conf.d/gitea.conf → localhost:3001
+- Gitea web installer completed — live at https://git.anandar.dev ✅
+- SSH_PORT set to 2222 (port 22 conflicts with system SSH)
+- Health endpoint: GET /api/healthz — returns cache and database status
+- Debugged 502 caused by missing /home/git — fixed with mkdir + chown (incident-001)
+
+### Git Remotes — sre-lab Repo
+- origin → github.com/anandarwork-code/sre-lab (public portfolio)
+- gitea → http://192.168.122.152:3001/anand/sre-lab (self-hosted, internal IP)
+- Both remotes active and pushing successfully
+
+### Incident Reports
+- incident-001-gitea-502-no-home-dir.md — Gitea down, missing /home/git directory
 
 ### GitHub Portfolio
 - Repo: github.com/anandarwork-code/sre-lab
 - Structure: scripts/, incident-notes/, monitoring/, terraform/, experiments/, progress/
 - SSH key (ed25519) configured for passwordless push
-- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, sreapp/, README.md, progress.txt, prometheus.yml, monitoring/cloudflared-config.yml
+- Committed: check_services.sh, check_mysql.sh, check_sreapp.sh, check_sreapp.sh,
+  multi_health_check.sh, sreapp/, README.md, progress.txt, prometheus.yml,
+  monitoring/cloudflared-config.yml, logs/.gitkeep,
+  incident-notes/incident-001-gitea-502-no-home-dir.md
 
 ---
 
@@ -144,35 +164,47 @@ Hypervisor   : KVM + QEMU + libvirt
 | Database   | sre-db  | MySQL 8.0          | ✅ Live      |
 | Monitoring | sre-mon | Prometheus         | ✅ Live      |
 | Monitoring | sre-mon | Grafana v12.4.2    | ✅ Live      |
+| Git        | sre-vm1 | Gitea v1.25.5      | ✅ Live      |
 
 ---
 
 ## Public URLs (via Cloudflare Tunnel)
 
-| URL                      | Points To           | Status    |
-|--------------------------|---------------------|-----------|
-| https://anandar.dev      | sre-vm1 Nginx:80    | ✅ Live   |
-| https://grafana.anandar.dev | sre-mon:3000     | ✅ Live   |
-| https://git.anandar.dev  | sre-vm1 (Gitea)     | ⏳ Pending|
+| URL                         | Points To           | Status    |
+|-----------------------------|---------------------|-----------|
+| https://anandar.dev         | sre-vm1 Nginx:80    | ✅ Live   |
+| https://grafana.anandar.dev | sre-mon:3000        | ✅ Live   |
+| https://git.anandar.dev     | sre-vm1 Gitea:3001  | ✅ Live   |
 
 ---
 
 ## Prometheus Scrape Targets
 
-| Job Name          | Target                    | Status   |
-|-------------------|---------------------------|----------|
+| Job Name           | Target                    | Status   |
+|--------------------|---------------------------|----------|
 | prometheus_monitor | localhost:9090            | ✅ Up    |
-| sre-vm1_monitor   | 192.168.122.152:9100      | ✅ Up    |
-| db-node_monitor   | 192.168.122.127:9100      | ✅ Up    |
+| sre-vm1_monitor    | 192.168.122.152:9100      | ✅ Up    |
+| db-node_monitor    | 192.168.122.127:9100      | ✅ Up    |
+
+---
+
+## Health Check Coverage (multi_health_check.sh)
+
+| Service    | VM      | Status        |
+|------------|---------|---------------|
+| nginx      | sre-vm1 | ✅ Monitored  |
+| sreapp     | sre-vm1 | ✅ Monitored  |
+| mysqld     | sre-db  | ✅ Monitored  |
+| prometheus | sre-mon | ✅ Monitored  |
+| gitea      | sre-vm1 | ✅ Monitored  |
 
 ---
 
 ## Next Steps
 
-- Install and configure Gitea on sre-vm1 — NEXT
-- Write automated MySQL backup script with cron
+- Automated MySQL backup script — NEXT
 - Add alerting — notify when any service goes down
-- Configure git.anandar.dev subdomain once Gitea is installed
 - Failure lab simulations: disk full, service crash, network loss
+- Containers — Docker / Podman on container-node VM
 
 ---
