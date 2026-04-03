@@ -1,5 +1,5 @@
 # SRE Lab — Progress Log
-Last Updated: 2026-04-02
+Last Updated: 2026-04-03
 
 ---
 
@@ -17,8 +17,8 @@ Hypervisor   : KVM + QEMU + libvirt
 | almalinux9-vm1 | sre-vm1  | 192.168.122.152 | AlmaLinux 9.7 Min | Running     | App node (Nginx + Node.js + Gitea + cloudflared)            |
 | db-node        | sre-db   | 192.168.122.127 | AlmaLinux 9.7 Min | Running     | Database (MySQL)                                             |
 | sre-mon        | sre-mon  | 192.168.122.218 | AlmaLinux 9.7 Min | Running     | Monitoring (Prometheus + Grafana)                            |
+| sre-fail       | sre-fail | 192.168.122.224 | AlmaLinux 9.7 Min | Running     | Failure simulation lab                                       |
 | container-node | —        | TBD             | —                 | Planned     | Docker / Podman                                              |
-| failure-lab    | —        | TBD             | —                 | Planned     | Intentional failure simulations                              |
 
 ---
 
@@ -46,9 +46,11 @@ Hypervisor   : KVM + QEMU + libvirt
 - Created VM1 (sre-vm1) using virt-install — text mode install
 - Created VM2 (sre-db) using virt-install — text mode install
 - Created VM3 (sre-mon) using virt-install — text mode install
+- Created VM4 (sre-fail) using virt-install — text mode install
 - Mastered virsh lifecycle: start, shutdown, destroy, reboot, autostart
 - Created snapshot (snap1) on sre-vm1
-- Configured SSH passwordless auth (ed25519) from host to all three VMs
+- Created snapshot (snap-clean) on sre-fail — clean baseline before simulations
+- Configured SSH passwordless auth (ed25519) from host to all four VMs
 
 ### User Management (sre-vm1)
 - Created sradmin — full sudo via wheel group
@@ -58,9 +60,10 @@ Hypervisor   : KVM + QEMU + libvirt
 ### MySQL Database Setup (sre-db)
 - Installed MySQL 8.0 on sre-db
 - Ran mysql_secure_installation — root secured, anonymous users removed
-- Created database: srelab (sreapp) and gitea (Gitea)
-- Created users: sreapp@192.168.122.152 and gitea@%
-- Opened firewall port 3306
+- Created database: srelab
+- Created user: sreapp@192.168.122.152 — locked to sre-vm1 only
+- Granted full privileges on srelab.* to sreapp
+- Opened firewall port 3306 for sre-vm1 access only
 
 ### Node.js App Stack (sre-vm1)
 - Installed Node.js v20.20.1 and npm 10.8.2 via NodeSource repo
@@ -80,70 +83,114 @@ Hypervisor   : KVM + QEMU + libvirt
   - Monitors: nginx, sreapp (sre-vm1), mysqld (sre-db), prometheus (sre-mon), gitea (sre-vm1)
   - Runs every 15 minutes via cron — logs to ~/sre-lab/logs/multi_health_check_log.txt
   - Uses reusable check_service() function with local variables and positional arguments
-- mysql_backup.sh — automated MySQL backup script ✅
-  - Dumps srelab and gitea databases with timestamped filenames (YYYY-MM-DD_HH-MM-SS)
-  - Saves to /var/backups/mysql/ on sre-db
-  - Logs to /var/log/mysql_backup.log
-  - Cleans up backups older than 7 days via find -mtime +7 -delete
-  - Runs daily at 2am via root crontab on sre-db
+- mysql_backup.sh — automated mysqldump, timestamped, 7-day cleanup, credentials in /root/.my.cnf
 
 ### Monitoring Stack (sre-mon)
-- Installed Prometheus v2.51.0 — binary, config, data dir, system user, systemd service
-- Installed Node Exporter v1.10.2 on sre-vm1 and sre-db — all targets health: up
-- Installed Grafana v12.4.2 — Prometheus connected, Node Exporter Full dashboard imported
-- Changed default admin password
+- Prometheus v2.51.0 — scraping 3 targets every 15s, all health: up
+- Node Exporter v1.10.2 on sre-vm1 and sre-db
+- Grafana v12.4.2 — Node Exporter Full dashboard imported (ID 1860)
+- All targets: localhost:9090, 192.168.122.152:9100, 192.168.122.127:9100
 
 ### Cloudflare Tunnel (sre-vm1)
-- Installed cloudflared v2026.3.0 — tunnel: sre-lab
-- DNS CNAME records for anandar.dev, grafana.anandar.dev, git.anandar.dev
-- All three subdomains live with SSL via Cloudflare
-- Tunnel is HTTP only — Git SSH over tunnel not possible
+- cloudflared v2026.3.0 — tunnel sre-lab running and enabled
+- DNS CNAME records: anandar.dev, grafana.anandar.dev, git.anandar.dev
+- All three subdomains live with SSL
+- Note: Tunnel is HTTP only — Git SSH not possible through tunnel
 
 ### Gitea Setup (sre-vm1)
-- Installed Gitea v1.25.5 — live at https://git.anandar.dev
-- MySQL database gitea on sre-db, Nginx reverse proxy, SSH on port 2222
-- Debugged 502 caused by missing /home/git — fixed (incident-001)
+- Gitea v1.25.5 — live at https://git.anandar.dev
+- SSH_PORT 2222, firewall ports 3001 and 2222 open
+- /home/git created and owned by git user
+- Health endpoint: /api/healthz
 
-### MySQL Backup (sre-db) ✅
-- mysql_backup.sh — backs up srelab and gitea databases
-- Timestamped filenames, 7-day cleanup, daily 2am cron
-- Committed to GitHub and Gitea
+### MySQL Backups (sre-db)
+- mysql_backup.sh — daily 2am cron on root crontab
+- Backs up srelab and gitea databases
+- 7-day retention, logs to /var/log/mysql_backup.log
+- Credentials in /root/.my.cnf (chmod 600)
 
 ### Git Remotes
-- origin → github.com/anandarwork-code/sre-lab
-- gitea → http://192.168.122.152:3001/anand/sre-lab
+- origin → GitHub (public portfolio)
+- gitea → http://192.168.122.152:3001/anand/sre-lab (self-hosted)
+
+### Failure Simulations (sre-fail)
+- VM created, passwordless SSH, snap-clean baseline snapshot taken
+- Simulation 1: Disk Full
+  - Filled disk to 100% with fallocate
+  - Detected with: du -sh /* | sort -rh → du -sh /tmp/* | sort -rh
+  - Recovered by: rm /tmp/diskfill*.img
+  - Incident-002 written and committed to Gitea
 
 ### Incident Reports
-- incident-001-gitea-502-no-home-dir.md
+- incident-001: Gitea 502 — missing /home/git (GitHub + Gitea)
+- incident-002: Disk full on sre-fail — fallocate simulation (Gitea only)
+
+### GitHub Portfolio
+- Repo: github.com/anandarwork-code/sre-lab
+- README updated — reflects full current lab state, live URLs, all scripts
+- Default branch: master (main deleted)
 
 ---
 
-## Live Stack
+## Live 3-Tier Stack
 
 | Layer      | VM      | Stack              | Status       |
 |------------|---------|--------------------|--------------|
 | App/Web    | sre-vm1 | Nginx + Node.js    | ✅ Live      |
 | Database   | sre-db  | MySQL 8.0          | ✅ Live      |
-| Monitoring | sre-mon | Prometheus+Grafana | ✅ Live      |
+| Monitoring | sre-mon | Prometheus         | ✅ Live      |
+| Monitoring | sre-mon | Grafana v12.4.2    | ✅ Live      |
 | Git        | sre-vm1 | Gitea v1.25.5      | ✅ Live      |
 
 ---
 
-## Public URLs
+## Public URLs (via Cloudflare Tunnel)
 
-| URL                         | Status    |
-|-----------------------------|-----------|
-| https://anandar.dev         | ✅ Live   |
-| https://grafana.anandar.dev | ✅ Live   |
-| https://git.anandar.dev     | ✅ Live   |
+| URL                         | Points To           | Status    |
+|-----------------------------|---------------------|-----------|
+| https://anandar.dev         | sre-vm1 Nginx:80    | ✅ Live   |
+| https://grafana.anandar.dev | sre-mon:3000        | ✅ Live   |
+| https://git.anandar.dev     | sre-vm1 Gitea:3001  | ✅ Live   |
+
+---
+
+## Prometheus Scrape Targets
+
+| Job Name           | Target                    | Status   |
+|--------------------|---------------------------|----------|
+| prometheus_monitor | localhost:9090            | ✅ Up    |
+| sre-vm1_monitor    | 192.168.122.152:9100      | ✅ Up    |
+| db-node_monitor    | 192.168.122.127:9100      | ✅ Up    |
+
+---
+
+## Health Check Coverage (multi_health_check.sh)
+
+| Service    | VM      | Status        |
+|------------|---------|---------------|
+| nginx      | sre-vm1 | ✅ Monitored  |
+| sreapp     | sre-vm1 | ✅ Monitored  |
+| mysqld     | sre-db  | ✅ Monitored  |
+| prometheus | sre-mon | ✅ Monitored  |
+| gitea      | sre-vm1 | ✅ Monitored  |
+
+---
+
+## Failure Simulation Log
+
+| # | Simulation       | VM       | Date       | Status     |
+|---|------------------|----------|------------|------------|
+| 1 | Disk full        | sre-fail | 03.04.2026 | ✅ Done    |
+| 2 | Service crash    | sre-fail | —          | ⏳ Next    |
+| 3 | Network failure  | sre-fail | —          | ⏳ Planned |
+| 4 | Memory pressure  | sre-fail | —          | ⏳ Planned |
 
 ---
 
 ## Next Steps
 
-- Add alerting — notify when any service goes down
-- Failure lab simulations: disk full, service crash, network loss
+- Service crash + auto-recovery simulation on sre-fail
+- Alerting — Prometheus alertmanager
 - Containers — Docker / Podman on container-node VM
-- Add GitHub link to LinkedIn profile
 
 ---
