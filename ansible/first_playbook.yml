@@ -1,0 +1,23 @@
+- name: Setup webserver basics
+  hosts: all
+  become: yes
+
+
+  tasks:
+
+    - name: Ensure tree is installed
+      dnf:
+        name: tree
+        state: present
+
+    - name: Create a test directory 
+      file: 
+        path: /opt/ansible-test
+        state: directory
+        mode: '0755'
+
+    - name: Create a test file 
+      copy:
+        content: "Ansible was here \n "
+        dest: /opt/ansible-test/hello.txt
+        mode: '0644'
