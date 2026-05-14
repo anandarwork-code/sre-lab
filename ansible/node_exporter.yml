@@ -1,0 +1,52 @@
+---
+
+- name: Install Node exporter
+  hosts: Fail
+  become: yes
+
+  tasks:
+    - name: Download Node exporter tarball
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v1.11.1/node_exporter-1.11.1.linux-amd64.tar.gz"
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: extract the tarball
+      unarchive: 
+        src: /tmp/node_exporter.tar.gz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Copy the binary 
+      copy:
+        src: /tmp/node_exporter-1.11.1.linux-amd64/node_exporter
+        dest: /usr/local/bin/node_exporter
+        mode: '0755'
+        remote_src: yes
+
+
+    - name: Create the service file for node exporter
+      copy: 
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+
+          [Service]
+          User=root
+          ExecStart=/usr/local/bin/node_exporter
+
+          [Install]
+          WantedBy=multi-user.target
+  
+        dest: /etc/systemd/system/node_exporter.service
+        mode: '0644'
+  
+    - name: reload the systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and enable Node exporter
+      systemd:    
+        name: node_exporter
+        state: started
+        enabled: yes
