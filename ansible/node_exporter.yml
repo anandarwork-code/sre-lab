@@ -1,13 +1,16 @@
 ---
 
 - name: Install Node exporter
-  hosts: Fail
+  hosts: all
   become: yes
+
+  vars: 
+    ne_version: "1.11.1"
 
   tasks:
     - name: Download Node exporter tarball
       get_url:
-        url: "https://github.com/prometheus/node_exporter/releases/download/v1.11.1/node_exporter-1.11.1.linux-amd64.tar.gz"
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ ne_version }}/node_exporter-{{ ne_version }}.linux-amd64.tar.gz"
         dest: /tmp/node_exporter.tar.gz
 
     - name: extract the tarball
@@ -18,7 +21,7 @@
 
     - name: Copy the binary 
       copy:
-        src: /tmp/node_exporter-1.11.1.linux-amd64/node_exporter
+        src: /tmp/node_exporter-{{ ne_version }}.linux-amd64/node_exporter
         dest: /usr/local/bin/node_exporter
         mode: '0755'
         remote_src: yes
