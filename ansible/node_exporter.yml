@@ -11,11 +11,11 @@
     - name: Download Node exporter tarball
       get_url:
         url: "https://github.com/prometheus/node_exporter/releases/download/v{{ ne_version }}/node_exporter-{{ ne_version }}.linux-amd64.tar.gz"
-        dest: /tmp/node_exporter.tar.gz
+        dest: /tmp/node_exporter-{{ ne_version }}.linux-amd64.tar.gz
 
     - name: extract the tarball
       unarchive: 
-        src: /tmp/node_exporter.tar.gz
+        src: /tmp/node_exporter-{{ ne_version }}.linux-amd64.tar.gz
         dest: /tmp/
         remote_src: yes
 
