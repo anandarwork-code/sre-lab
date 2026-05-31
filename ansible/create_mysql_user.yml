@@ -1,0 +1,20 @@
+--- 
+
+- name: Create mysql user with vaulted password 
+  hosts: sre-db 
+  become: yes
+
+  vars:
+    mysql_user: "vaulttest"
+
+
+  tasks:
+   - name: Create MySQL user
+     community.mysql.mysql_user:
+       name: "{{ mysql_user }}"
+       password: "{{ vault_mysql_password }}"
+       priv: '*.*:ALL'
+       state: present
+       login_user: root 
+       login_unix_socket: /var/lib/mysql/mysql.sock
+       login_password: "{{ vault_mysql_root_password }}"
