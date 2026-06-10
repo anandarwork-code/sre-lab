@@ -1,0 +1,26 @@
+name: Deploy sreapp
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+           
+      - name: Install dependencies
+        run: npm install
+
+      - name: Test code
+        run: npm test
+
+      - name: Deploy
+        run: |
+          cp -r . /home/anand/sreapp/
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > /home/anand/sreapp/.env
+          chcon -t etc_t /home/anand/sreapp/.env
+          sudo systemctl restart sreapp
