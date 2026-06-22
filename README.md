@@ -1,6 +1,6 @@
 # sre-lab
 
-Personal SRE learning lab built on AlmaLinux with KVM virtualization.  
+Personal SRE learning lab built on AlmaLinux with KVM virtualization.
 Every script, incident report, and config committed here is from real hands-on work —
 not tutorials, not copy-paste. Built, broken, and fixed by hand.
 
@@ -47,6 +47,7 @@ Host: sre-lab (AlmaLinux 9.7) — 16GB RAM, 80GB /var
 - **User management** — sradmin (full sudo), jradmin (limited systemctl), dev_user (no sudo)
 - **Failure simulations** — disk full, service crash, network interface failure — all documented as incident reports
 - **SELinux enforcing** — not disabled. Configured correctly throughout.
+- **AWS** — custom VPC, subnet, IGW, route table, EC2, IAM role, S3 — built from scratch on own account
 
 ---
 
@@ -105,6 +106,31 @@ steps:
 
 ---
 
+## AWS
+
+**Account:** ap-south-1 (Mumbai) — personal account, built from scratch
+
+```
+sre-vpc (10.0.0.0/16)
+└── sre-public-subnet (10.0.1.0/24) — ap-south-1a
+     ├── sre-rtb: 10.0.0.0/16 → local, 0.0.0.0/0 → sre-igw
+     └── sre-ec2 (t3.micro, Amazon Linux 2023)
+          └── IAM role: sre-ec2-s3-role (AmazonS3FullAccess)
+S3: sre-lab-anand-01072003 — SSE-S3 encryption, public access blocked
+```
+
+**What was built hands-on (not console wizard defaults):**
+- Custom VPC with manually defined CIDR block
+- Public subnet tied to a specific AZ
+- Internet Gateway created and attached to VPC separately
+- Route table with explicit `0.0.0.0/0 → IGW` entry, manually associated with subnet
+- EC2 launched via CLI with security group restricting SSH to my IP only
+- IMDSv2 enforced — metadata access requires token-based PUT/GET, not plain curl
+- IAM role attached to EC2 — no `aws configure`, no static keys, temporary credentials via metadata service
+- S3 bucket upload/download round-trip verified via `aws s3 cp` using role credentials
+
+---
+
 ## Scripts
 
 | Script | Purpose |
@@ -118,6 +144,7 @@ steps:
 | `scripts/process_check.sh` | Process validation with pgrep, ps aux output, exit code handling |
 | `scripts/disk_alert.sh` | Disk usage monitoring with threshold alerts, cron every 15m |
 | `scripts/port_scan.sh` | Network port scanner using netcat, 6 common ports, timestamped logging |
+| `scripts/selinux_proof.sh` | SELinux context verification, service status, HTTP health check — enforcing mode proof |
 
 ---
 
@@ -193,6 +220,8 @@ Grafana (sre-mon:3000) — Node Exporter Full dashboard (ID 1860)
 - Prometheus + Grafana monitoring stack
 - SELinux — enforcing mode, context management, MAC vs DAC
 - systemd service management and troubleshooting
+- AWS — custom VPC networking, EC2, IAM roles, S3, IMDSv2, zero hardcoded credentials
+- Git — feature branches, pull request workflow, merge conflict resolution (single and multi-hunk)
 - Incident debugging and documentation
 - Network troubleshooting — netcat, tcpdump, firewalld, virsh console recovery
 
@@ -208,7 +237,6 @@ Grafana (sre-mon:3000) — Node Exporter Full dashboard (ID 1860)
 | `monitoring/` | Prometheus configs, Grafana dashboards, cloudflared config |
 | `.github/workflows/` | GitHub Actions CI/CD pipeline |
 | `sreapp/` | Node.js app with Containerfile |
-| `logs/` | Health check cron output |
 
 ---
 
