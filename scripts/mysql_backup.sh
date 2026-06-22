@@ -1,4 +1,12 @@
 #!/bin/bash
+# Problem:  MySQL databases (srelab, gitea) require manual intervention for backups,
+#           creating risk of data loss in the event of corruption or failure.
+# Approach: Automated script dumps both databases to timestamped .sql files in
+#           /var/backups/mysql, logs each operation, and deletes backups older
+#           than 7 days to manage disk usage.
+# Usage:    Run manually or via cron (daily 2am). On DB corruption or data loss,
+#           restore with: mysql -u root <db_name> < <backup_file>.sql
+
 
 user=root
 #ip=localhost
