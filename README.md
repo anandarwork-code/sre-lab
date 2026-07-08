@@ -199,9 +199,9 @@ Grafana (sre-mon:3000) — Node Exporter Full dashboard (ID 1860)
 | Incident | Summary |
 |----------|---------|
 | [incident-001](incident-notes/incident-001-gitea-502-no-home-dir.md) | Gitea 502 — missing /home/git directory caused permission failure on startup |
-| [incident-002](incident-notes/incident-002-disk-full-simulation.md) | Disk full simulation — fallocate test, df/du diagnosis |
-| [incident-003](incident-notes/incident-003-rsyslog-crash.md) | rsyslog crash — missing config file |
-| [incident-004](incident-notes/incident-004-disk-drill.md) | Disk control drill — full df/du/fallocate/rm diagnostic cycle |
+| [incident-002](incident-notes/incident-002-sre-fail-disk-full-no-space.md) | Disk full simulation — fallocate test, df/du diagnosis |
+| [incident-003](incident-notes/incident-003-rsyslog-missing-config.md) | rsyslog crash — missing config file |
+| [incident-004](incident-notes/incident-004-disk-full-no-space-page.md) | Disk control drill — full df/du/fallocate/rm diagnostic cycle |
 | [incident-005](incident-notes/incident-005-network-failure.md) | Network interface failure — enp1s0 down on sre-fail, diagnosed and recovered via virsh console |
 | [incident-006](incident-notes/incident-006-sreapp-down-boot-race-condition.md) | sreapp down 4 days — boot race condition on startup |
 | [incident-007](incident-notes/incident-007-docker-port-3000-bind-conflict.md) | Docker port 3000 bind conflict — delayed kernel port release |
