@@ -48,6 +48,7 @@ Host: sre-lab (AlmaLinux 9.7) — 16GB RAM, 80GB /var
 - **Failure simulations** — disk full, service crash, network interface failure — all documented as incident reports
 - **SELinux enforcing** — not disabled. Configured correctly throughout.
 - **AWS** — custom VPC, subnet, IGW, route table, EC2, IAM role, S3 — built from scratch on own account
+- **Docker Compose** — separate repo ([container-lab](https://github.com/anandarwork-code/container-lab)) — custom Dockerfile, healthcheck-gated service dependencies, env_file secrets management
 
 ---
 
@@ -128,6 +129,15 @@ S3: sre-lab-anand-01072003 — SSE-S3 encryption, public access blocked
 - IMDSv2 enforced — metadata access requires token-based PUT/GET, not plain curl
 - IAM role attached to EC2 — no `aws configure`, no static keys, temporary credentials via metadata service
 - S3 bucket upload/download round-trip verified via `aws s3 cp` using role credentials
+
+
+---
+
+## Related Repos
+
+| Repo | Purpose |
+|------|---------|
+| [container-lab](https://github.com/anandarwork-code/container-lab) | Docker Compose — custom Dockerfile, healthchecks, service dependencies, env-based secrets |
 
 ---
 
@@ -215,6 +225,7 @@ Grafana (sre-mon:3000) — Node Exporter Full dashboard (ID 1860)
 - Ansible — roles, vault, handlers, templates, Jinja2, idempotent design
 - Container orchestration — Podman, rootless quadlets, systemd integration
 - Bash scripting — functions, cron, logging, SSH automation, exit code handling
+- Docker Compose — multi-container orchestration, healthchecks, `depends_on: condition`, build vs image-pull tradeoffs
 - Nginx reverse proxy configuration
 - MySQL administration and automated backups
 - Prometheus + Grafana monitoring stack
