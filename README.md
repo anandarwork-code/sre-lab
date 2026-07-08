@@ -203,7 +203,8 @@ Grafana (sre-mon:3000) — Node Exporter Full dashboard (ID 1860)
 | [incident-003](incident-notes/incident-003-rsyslog-crash.md) | rsyslog crash — missing config file |
 | [incident-004](incident-notes/incident-004-disk-drill.md) | Disk control drill — full df/du/fallocate/rm diagnostic cycle |
 | [incident-005](incident-notes/incident-005-network-failure.md) | Network interface failure — enp1s0 down on sre-fail, diagnosed and recovered via virsh console |
-
+| [incident-006](incident-notes/incident-006-sreapp-down-boot-race-condition.md) | sreapp down 4 days — boot race condition on startup |
+| [incident-007](incident-notes/incident-007-docker-port-3000-bind-conflict.md) | Docker port 3000 bind conflict — delayed kernel port release |
 ---
 
 ## Failure Simulations
