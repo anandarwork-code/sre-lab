@@ -1,4 +1,17 @@
 #!/bin/bash
+# multi_health_check.sh
+# SSHes into sre-vm1, sre-db, and sre-mon and checks the status of 5
+# services (nginx, sreapp, mysqld, prometheus, gitea) via
+# `systemctl is-active`, color-coded OK/FAIL output.
+#
+# Usage:   bash multi_health_check.sh   (not yet chmod +x)
+# Flags:   none
+# Requires: passwordless SSH (key auth) as $ssh_user to all 3 targets
+# Output:  stdout only
+# Exit:    0 always
+# Cron:    runs every 15 min
+# Note:    Gitea check included here predates Gitea's retirement as a
+#          workflow target (S48) — service still runs, check still valid
 
 sre_vm1=192.168.122.152
 sre_db=192.168.122.127

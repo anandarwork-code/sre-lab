@@ -1,4 +1,12 @@
 #!/bin/bash 
+# check_services.sh
+# Checks whether sshd, httpd, and libvirtd are active and prints a
+# running/total summary.
+#
+# Usage:   bash check_services.sh   (not yet chmod +x)
+# Flags:   none
+# Output:  stdout only, no log file
+# Exit:    0 always — does not fail even if services are down
 
 echo "====================== services  check=============================="
 

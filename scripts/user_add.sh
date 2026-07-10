@@ -1,4 +1,19 @@
 #!/bin/bash
+# user_add.sh
+# Creates a new user with a home dir, sets up an empty .ssh/authorized_keys
+# with correct permissions, and grants passwordless sudo for a single
+# specific command (systemctl restart nginx) via a dedicated sudoers.d file.
+#
+# Usage:   ./user_add.sh <username>
+# Flags:   none (positional arg only)
+# Exits early (code 1) if: no username given, or user already exists
+# Note:    the nginx-restart sudo grant is unconditional for every user
+#          this script creates — not opt-in. Intentional for this lab's
+#          use case (ops users need to bounce nginx) but worth knowing
+#          before reusing this script in a different context.
+
+if [ -z "$1" ] ; then
+
 
 if [ -z "$1" ] ; then 
 	echo " usage: $0 <username>"

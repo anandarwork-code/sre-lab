@@ -1,4 +1,15 @@
 #!/bin/bash
+# port_scan.sh
+# Scans a target IP for 6 common lab ports (80, 22, 3000, 3306, 8080,
+# 9100) using nc, color-coded OPEN/CLOSED output.
+#
+# Usage:   ./port_scan.sh <target_ip>
+# Flags:   none (positional arg only)
+# Output:  stdout + appended to /var/log/port_scan.log
+# Exit:    1 if no target given, 0 otherwise (does not reflect scan
+#          results in exit code)
+
+GREEN='\033[0;32m'
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'

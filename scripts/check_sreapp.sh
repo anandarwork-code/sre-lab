@@ -1,4 +1,17 @@
 #!/bin/bash
+
+# check_sreapp.sh
+# Full-stack health check for the sreapp deployment on sre-vm1: hits the
+# app's /health endpoint (used here as a proxy for DB reachability, since
+# the endpoint reports OK only when the app can reach MySQL), then checks
+# nginx and sreapp systemd service status.
+#
+# Usage:   ./check_sreapp.sh
+# Flags:   none
+# Target:  hardcoded to 192.168.122.152 (sre-vm1) — not parameterized
+# Output:  stdout + appended to ~/sreapp_log.txt
+# Exit:    0 always
+
 echo "====================Sreapp-Health-Check================================"
 
 total=0
