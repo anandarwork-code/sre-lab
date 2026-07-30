@@ -8,14 +8,21 @@
 # Output:  stdout + appended to /var/log/port_scan.log
 # Exit:    1 if no target given, 0 otherwise (does not reflect scan
 #          results in exit code)
-
-GREEN='\033[0;32m'
+set -euo pipefail
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-if [ -z "$1" ] ; then 
+if which nc &>/dev/null ; then 
+	echo " ------------------Initiating port scan---------------------"
+else 
+	echo "Netcat doesnot exist kindly install using ( sudo dnf/apt install netcat ) and proceed"
+	exit 1
+fi 
+
+
+if [ "$#" -eq 0  ] ; then 
 	echo " usage: $0 <target_ip>"
 	exit 1
 fi
@@ -29,8 +36,7 @@ echo "=== Port scan started: $(date) | Target: $target ===" >> "$LOGFILE"
 ports=( 80 22 3000 3306 8080 9100 )
 
 for i in "${ports[@]}"; do 
-	nc -zv  $target $i  &>/dev/null
-        if [ $? -eq 0 ]; then 
+        if nc -zv "$target" "$i" &>/dev/null; then 
 		
 	        echo -e " port $i is ${GREEN}OPEN${NC}"
                 echo " port $i is OPEN" >> "$LOGFILE"

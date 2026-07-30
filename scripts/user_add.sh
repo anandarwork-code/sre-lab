@@ -7,34 +7,36 @@
 # Usage:   ./user_add.sh <username>
 # Flags:   none (positional arg only)
 # Exits early (code 1) if: no username given, or user already exists
+# Hardening: set -euo pipefail; all $user expansions quoted; ERR trap armed
+#            after useradd succeeds rolls back (userdel -r) on any failure
+#            during setup (mkdir/chown/chmod/sudoers steps).
 # Note:    the nginx-restart sudo grant is unconditional for every user
 #          this script creates — not opt-in. Intentional for this lab's
 #          use case (ops users need to bounce nginx) but worth knowing
 #          before reusing this script in a different context.
 
-if [ -z "$1" ] ; then
+set -euo pipefail 
 
-
-if [ -z "$1" ] ; then 
+if [ "$#" -lt 1 ] ; then 
 	echo " usage: $0 <username>"
 	exit 1
 fi 
 
-user=$1
+user="$1"
 
 if id "$user" &>/dev/null; then 
 	echo "error : user $user already exist"
         exit 1
 fi
 
-sudo useradd -m -s /bin/bash $user
-sudo mkdir -p /home/$user/.ssh
-sudo touch /home/$user/.ssh/authorized_keys
-sudo chown -R $user:$user /home/$user/.ssh
-sudo chmod 700 /home/$user/.ssh
-sudo chmod 600 /home/$user/.ssh/authorized_keys
+sudo useradd -m -s /bin/bash "$user"
+trap 'echo "failed mid-setup - rolling back user $user"; sudo userdel -r "$user" 2>/dev/null ; exit 1 ' ERR
 
-echo " $user ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart nginx" | sudo tee -a /etc/sudoers.d/$user
-sudo chmod 440 /etc/sudoers.d/$user
-
+sudo mkdir -p "/home/$user/.ssh"
+sudo touch "/home/$user/.ssh/authorized_keys"
+sudo chown -R "$user:$user" "/home/$user/.ssh"
+sudo chmod 700 "/home/$user/.ssh"
+sudo chmod 600 "/home/$user/.ssh/authorized_keys"
+echo "$user ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart nginx" | sudo tee -a "/etc/sudoers.d/$user"
+sudo chmod 440 "/etc/sudoers.d/$user"
 echo "User $user created - add SSH key to /home/$user/.ssh/authorized_keys "
