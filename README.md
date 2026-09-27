@@ -137,6 +137,7 @@ S3: sre-lab-anand-01072003 — SSE-S3 encryption, public access blocked
 
 | Repo | Purpose |
 |------|---------|
+| [nginx-healthz](https://github.com/anandarwork-code/nginx-healthz) | Custom nginx image with build-time /healthz endpoint — fixed a real liveness-probe CrashLoopBackOff (S62) |
 | [container-lab](https://github.com/anandarwork-code/container-lab) | Docker Compose — custom Dockerfile, healthchecks, service dependencies, env-based secrets |
 
 ---
