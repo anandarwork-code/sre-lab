@@ -14,9 +14,16 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: ghcr.io/anandarwork-code/k3s-pod-image:latest
+          image: ghcr.io/anandarwork-code/k3s-pod-image:v2
           ports:
             - containerPort: 80
+          resources: 
+            requests:
+               cpu: "100m"
+               memory: "64Mi"
+            limits:
+               cpu: "100m"
+               memory: "64Mi"                
           livenessProbe:
             httpGet:
               path: /healthz
